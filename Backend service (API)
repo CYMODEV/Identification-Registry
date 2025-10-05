@@ -1,0 +1,138 @@
+import { createServer } from './server';
+
+const port = process.env.PORT || 4000;
+createServer().listen(port, () => {
+  console.log(`Cymos API listening on :${port}`);
+});
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import morgan from 'morgan';
+import { authMiddleware } from './auth/auth.middleware';
+import citizensRoutes from './routes/citizens.routes';
+import agentsRoutes from './routes/agents.routes';
+import capabilitiesRoutes from './routes/capabilities.routes';
+import consentRoutes from './routes/consent.routes';
+import auditsRoutes from './routes/audits.routes';
+import ritualsRoutes from './routes/rituals.routes';
+
+export function createServer() {
+  const app = express();
+  app.use(helmet());
+  app.use(cors());
+  app.use(express.json());
+  app.use(morgan('dev'));
+  app.use(authMiddleware);
+
+  app.use('/citizens', citizensRoutes);
+  app.use('/agents', agentsRoutes);
+  app.use('/capabilities', capabilitiesRoutes);
+  app.use('/consent', consentRoutes);
+  app.use('/audits', auditsRoutes);
+  app.use('/rituals', ritualsRoutes);
+
+  app.get('/health', (_, res) => res.json({ ok: true }));
+  return app;
+}
+import { Request, Response, NextFunction } from 'express';
+import jwt from 'jsonwebtoken';
+import { roles } from './roles';
+
+export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  // Public read for GET; write ops require token
+  if (req.method === 'GET') return next();
+  const auth = req.headers.authorization;
+  if (!auth) return res.status(401).json({ error: 'Unauthorized' });
+  try {
+    const token = auth.replace('Bearer ', '');
+    const payload = jwt.verify(token, process.env.JWT_SECRET || 'cymos') as any;
+    (req as any).user = payload;
+    // Role-based routing example
+    if (req.path.startsWith('/capabilities') && !roles.canManageCapabilities(payload.role)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+    next();
+  } catch {
+    res.status(401).json({ error: 'Invalid token' });
+  }
+}
+import { Router } from 'express';
+import * as ctrl from '../controllers/citizens.controller';
+
+const r = Router();
+r.get('/', ctrl.list);
+r.get('/:id', ctrl.get);
+r.post('/', ctrl.create);
+r.patch('/:id', ctrl.update);
+r.post('/:id/activate', ctrl.activate);
+export default r;
+import { Request, Response } from 'express';
+import { prisma } from '../db/prisma';
+
+export async function list(_: Request, res: Response) {
+  const items = await prisma.citizen.findMany({ include: { guardians: true, consents: true } });
+  res.json(items);
+}
+export async function get(req: Request, res: Response) {
+  const item = await prisma.citizen.findUnique({ where: { id: req.params.id }, include: { consents: true } });
+  if (!item) return res.status(404).json({ error: 'Not found' });
+  res.json(item);
+}
+export async function create(req: Request, res: Response) {
+  const { kind, legalName, symbolicName, glyph, caption, storyAnchor } = req.body;
+  const item = await prisma.citizen.create({
+    data: { kind, legalName, symbolicName, glyph, caption, storyAnchor, state: 'active' }
+  });
+  res.status(201).json(item);
+}
+export async function update(req: Request, res: Response) {
+  const item = await prisma.citizen.update({ where: { id: req.params.id }, data: req.body });
+  res.json(item);
+}
+export async function activate(req: Request, res: Response) {
+  const item = await prisma.citizen.update({ where: { id: req.params.id }, data: { state: 'active' } });
+  res.json(item);
+}
+import { Router } from 'express';
+import * as ctrl from '../controllers/capabilities.controller';
+
+const r = Router();
+r.get('/', ctrl.list);
+r.get('/:id', ctrl.get);
+r.post('/', ctrl.create);
+r.patch('/:id', ctrl.update);
+r.post('/:id/transition', ctrl.transition);
+r.post('/:id/consent/bind', ctrl.bindConsent);
+export default r;
+import { Request, Response } from 'express';
+import { prisma } from '../db/prisma';
+
+export async function list(_: Request, res: Response) {
+  const items = await prisma.capability.findMany({ include: { consents: true, owner: true } });
+  res.json(items);
+}
+export async function get(req: Request, res: Response) {
+  const item = await prisma.capability.findUnique({ where: { id: req.params.id }, include: { consents: true } });
+  if (!item) return res.status(404).json({ error: 'Not found' });
+  res.json(item);
+}
+export async function create(req: Request, res: Response) {
+  const data = req.body;
+  const item = await prisma.capability.create({ data });
+  res.status(201).json(item);
+}
+export async function update(req: Request, res: Response) {
+  const item = await prisma.capability.update({ where: { id: req.params.id }, data: req.body });
+  res.json(item);
+}
+export async function transition(req: Request, res: Response) {
+  const { state } = req.body;
+  const item = await prisma.capability.update({ where: { id: req.params.id }, data: { state } });
+  res.json(item);
+}
+export async function bindConsent(req: Request, res: Response) {
+  const { consentId } = req.body;
+  const capId = req.params.id;
+  await prisma.capabilityConsent.create({ data: { capabilityId: capId, consentId } });
+  res.json({ ok: true });
+}
