@@ -1,0 +1,85 @@
+cymos-registry/
+├─ README.md
+├─ LICENSE
+├─ .gitignore
+├─ docker-compose.yml
+├─ .env.example
+├─ package.json
+├─ pnpm-lock.yaml
+├─ apps/
+│  ├─ api/                # Node + TypeScript + Express API
+│  │  ├─ src/
+│  │  │  ├─ index.ts
+│  │  │  ├─ server.ts
+│  │  │  ├─ config.ts
+│  │  │  ├─ auth/
+│  │  │  │  ├─ auth.middleware.ts
+│  │  │  │  └─ roles.ts
+│  │  │  ├─ routes/
+│  │  │  │  ├─ citizens.routes.ts
+│  │  │  │  ├─ agents.routes.ts
+│  │  │  │  ├─ capabilities.routes.ts
+│  │  │  │  ├─ consent.routes.ts
+│  │  │  │  ├─ audits.routes.ts
+│  │  │  │  └─ rituals.routes.ts
+│  │  │  ├─ controllers/
+│  │  │  │  ├─ citizens.controller.ts
+│  │  │  │  ├─ agents.controller.ts
+│  │  │  │  ├─ capabilities.controller.ts
+│  │  │  │  ├─ consent.controller.ts
+│  │  │  │  ├─ audits.controller.ts
+│  │  │  │  └─ rituals.controller.ts
+│  │  │  ├─ services/
+│  │  │  │  ├─ citizens.service.ts
+│  │  │  │  ├─ agents.service.ts
+│  │  │  │  ├─ capabilities.service.ts
+│  │  │  │  ├─ consent.service.ts
+│  │  │  │  ├─ audits.service.ts
+│  │  │  │  └─ rituals.service.ts
+│  │  │  ├─ db/
+│  │  │  │  ├─ prisma.ts
+│  │  │  │  └─ schema.prisma
+│  │  │  ├─ utils/
+│  │  │  │  ├─ validators.ts
+│  │  │  │  └─ error.ts
+│  │  │  └─ types/
+│  │  │     └─ dto.ts
+│  │  ├─ test/
+│  │  │  ├─ citizens.spec.ts
+│  │  │  └─ capabilities.spec.ts
+│  │  ├─ tsconfig.json
+│  │  └─ package.json
+│  └─ web/                # Next.js + React UI
+│     ├─ src/
+│     │  ├─ pages/
+│     │  │  ├─ index.tsx
+│     │  │  ├─ citizens.tsx
+│     │  │  ├─ agents.tsx
+│     │  │  ├─ capabilities.tsx
+│     │  │  ├─ audits.tsx
+│     │  │  └─ rituals.tsx
+│     │  ├─ components/
+│     │  │  ├─ Layout.tsx
+│     │  │  ├─ FlowSpine.tsx
+│     │  │  ├─ CategoryCard.tsx
+│     │  │  ├─ ConsentBadge.tsx
+│     │  │  └─ AuditLog.tsx
+│     │  ├─ lib/api.ts
+│     │  ├─ styles/globals.css
+│     │  └─ config/ui.ts
+│     ├─ public/glyphs/
+│     │  ├─ human.svg
+│     │  ├─ synthetic.svg
+│     │  ├─ ai.svg
+│     │  ├─ pet.svg
+│     │  ├─ robot.svg
+│     │  ├─ ecosystem.svg
+│     │  └─ collective.svg
+│     ├─ next.config.js
+│     └─ package.json
+├─ .github/
+│  └─ workflows/
+│     └─ ci.yml
+└─ scripts/
+   ├─ seed.ts
+   └─ migrate.sh
