@@ -1,0 +1,53 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: cymos
+      POSTGRES_PASSWORD: cymos
+      POSTGRES_DB: registry
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  api:
+    build: ./apps/api
+    environment:
+      DATABASE_URL: postgres://cymos:cymos@db:5432/registry
+      JWT_SECRET: cymos-secret
+    ports:
+      - "4000:4000"
+    depends_on: [db]
+    command: ["pnpm","start"]
+  web:
+    build: ./apps/web
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:4000
+    ports:
+      - "3000:3000"
+    depends_on: [api]
+    command: ["pnpm","dev"]
+volumes:
+  db_data:
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install
+      - run: pnpm -C apps/api prisma generate
+      - run: pnpm -C apps/api test
+      - run: pnpm -C apps/web build
