@@ -1,0 +1,174 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Citizen {
+  id            String   @id @default(cuid())
+  kind          CitizenKind
+  legalName     String?
+  symbolicName  String?
+  glyph         String?
+  caption       String?
+  storyAnchor   String?
+  state         CitizenState @default(active)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  guardians     Guardian[]
+  consents      ConsentBinding[]
+}
+
+model Guardian {
+  id         String  @id @default(cuid())
+  citizenId  String
+  guardianId String
+  relation   String
+
+  citizen    Citizen @relation(fields: [citizenId], references: [id])
+}
+
+model Agent {
+  id          String   @id @default(cuid())
+  name        String
+  glyph       String?
+  caption     String?
+  storyAnchor String?
+  state       AgentState @default(active)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  capabilities Capability[]
+}
+
+model Capability {
+  id           String   @id @default(cuid())
+  capabilityId String   @unique
+  name         String
+  kind         CapabilityKind
+  version      String
+  ownerId      String?
+  ownerType    OwnerType?
+  interface    Json
+  inputs       Json
+  outputs      Json
+  tags         String[]
+  dependsOn    String[]
+  risk         Json
+  auditIntervalDays Int  @default(30)
+  steward      String?
+  badges       String[]
+  uptime30d    Float?
+  latencyP95ms Int?
+  successRate30d Float?
+  state        LifecycleState @default(draft)
+  identitySymbol String?
+  identityCaption String?
+  storyAnchor  String?
+  useRights    UseRights?
+  attribution  String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  consents     CapabilityConsent[]
+  owner        Agent? @relation(fields: [ownerId], references: [id])
+}
+
+model ConsentPolicy {
+  id          String  @id @default(cuid())
+  code        String  @unique
+  name        String
+  description String
+  scope       Json
+  createdAt   DateTime @default(now())
+}
+
+model CapabilityConsent {
+  id           String @id @default(cuid())
+  capabilityId String
+  consentId    String
+
+  capability   Capability @relation(fields: [capabilityId], references: [id])
+  consent      ConsentPolicy @relation(fields: [consentId], references: [id])
+}
+
+model Audit {
+  id           String @id @default(cuid())
+  subjectType  SubjectType
+  subjectId    String
+  report       Json
+  createdAt    DateTime @default(now())
+}
+
+model ConsentBinding {
+  id          String @id @default(cuid())
+  citizenId   String
+  policyId    String
+  grantedAt   DateTime @default(now())
+
+  citizen     Citizen @relation(fields: [citizenId], references: [id])
+  policy      ConsentPolicy @relation(fields: [policyId], references: [id])
+}
+
+enum CitizenKind {
+  human
+  synthetic
+  pet
+  robot
+  ecosystem
+  collective
+}
+
+enum CitizenState {
+  active
+  suspended
+  retired
+}
+
+enum AgentState {
+  active
+  deprecated
+  retired
+}
+
+enum CapabilityKind {
+  function
+  service
+  utility
+  transform
+  evaluator
+  simulator
+  orchestration
+}
+
+enum LifecycleState {
+  draft
+  review
+  approved
+  deprecated
+  retired
+}
+
+enum OwnerType {
+  agent
+  citizen
+  worker
+  collective
+}
+
+enum SubjectType {
+  citizen
+  agent
+  capability
+}
+
+enum UseRights {
+  internal
+  community
+  public
+  commercial
+}
