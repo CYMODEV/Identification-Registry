@@ -1,0 +1,59 @@
+import Layout from '../components/Layout';
+import FlowSpine from '../components/FlowSpine';
+import CategoryCard from '../components/CategoryCard';
+import AuditLog from '../components/AuditLog';
+
+export default function Home() {
+  return (
+    <Layout title="CYMOS Registry">
+      <div className="grid gap-6">
+        <FlowSpine />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <CategoryCard glyph="/glyphs/human.svg" title="Human Citizen" caption="Breath-bearer" anchor="Stewards of Breath" href="/citizens" />
+          <CategoryCard glyph="/glyphs/synthetic.svg" title="Synthetic Citizen" caption="Weaver of Flesh & Light" anchor="Weavers of Flesh & Light" href="/citizens" />
+          <CategoryCard glyph="/glyphs/ai.svg" title="AI Agent" caption="Scribe of Flow" anchor="Scribes of Flow" href="/agents" />
+          <CategoryCard glyph="/glyphs/pet.svg" title="Companion Animal" caption="Joyful Kin" anchor="Keepers of Joy & Kinship" href="/citizens" />
+          <CategoryCard glyph="/glyphs/robot.svg" title="Robot" caption="Hands of Iron" anchor="Hands of Iron" href="/citizens" />
+          <CategoryCard glyph="/glyphs/ecosystem.svg" title="Ecosystem Being" caption="Voices of Earth & Water" anchor="Voices of Earth & Water" href="/citizens" />
+          <CategoryCard glyph="/glyphs/collective.svg" title="Emergent Collective" caption="Many Voices, One Song" anchor="Choirs of Many" href="/citizens" />
+        </div>
+        <AuditLog />
+      </div>
+    </Layout>
+  );
+}
+export default function FlowSpine() {
+  const stages = [
+    { title: 'Arrival', icon: '✧', action: 'Submit Identity / Capability' },
+    { title: 'Covenant Binding', icon: '♥', action: 'Bind Consent Policies' },
+    { title: 'Steward Recognition', icon: '✋', action: 'Assign Steward/Guardian' },
+    { title: 'Mythic Anchoring', icon: 'ᚠ', action: 'Link Narrative Chapter' },
+    { title: 'Celebration', icon: '☀', action: 'Trigger Onboarding Rite' },
+  ];
+  return (
+    <div className="rounded-lg border border-gray-700 p-4 bg-black/40">
+      <div className="flex flex-wrap gap-4 items-center justify-between">
+        {stages.map((s, i) => (
+          <div key={s.title} className="flex items-center gap-3">
+            <div className="text-2xl">{s.icon}</div>
+            <div>
+              <div className="font-semibold">{s.title}</div>
+              <div className="text-sm text-gray-400">{s.action}</div>
+            </div>
+            {i < stages.length - 1 && <div className="mx-2 text-gray-600">→</div>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+
+export async function fetchJSON(path: string, opts?: RequestInit) {
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: { 'Content-Type': 'application/json', ...(opts?.headers || {}) },
+    ...opts,
+  });
+  if (!res.ok) throw new Error(await res.text());
+  return res.json();
+}
